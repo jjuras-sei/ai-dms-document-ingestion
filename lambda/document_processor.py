@@ -4,9 +4,11 @@ import hashlib
 import uuid
 import base64
 from datetime import datetime
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from urllib.parse import unquote_plus
+from io import BytesIO
 import boto3
+from pypdf import PdfReader
 
 # Initialize AWS clients
 s3_client = boto3.client('s3')
@@ -28,6 +30,20 @@ table = dynamodb.Table(DYNAMODB_TABLE_NAME)
 def calculate_file_hash(content: bytes) -> str:
     """Calculate SHA256 hash of file content."""
     return hashlib.sha256(content).hexdigest()
+
+
+def get_page_count(document_content: bytes, content_type: str) -> Optional[int]:
+    """Extract page count from PDF documents."""
+    try:
+        # Only process PDF documents
+        if 'pdf' in content_type.lower():
+            pdf_file = BytesIO(document_content)
+            pdf_reader = PdfReader(pdf_file)
+            return len(pdf_reader.pages)
+        return None
+    except Exception as e:
+        print(f"Warning: Could not extract page count: {str(e)}")
+        return None
 
 
 def load_schema() -> Dict[str, Any]:
@@ -140,6 +156,9 @@ def process_document(bucket: str, key: str, upload_time: str) -> Dict[str, Any]:
     # Calculate file hash
     file_hash = calculate_file_hash(document_content)
     
+    # Extract page count for PDF documents
+    page_count = get_page_count(document_content, content_type)
+    
     # Load schema and prompt template
     schema = load_schema()
     prompt_template = load_prompt_template()
@@ -155,7 +174,7 @@ def process_document(bucket: str, key: str, upload_time: str) -> Dict[str, Any]:
     # Generate unique ID
     record_id = str(uuid.uuid4())
     
-    # Prepare record for DynamoDB
+    # Prepare record for DynamoDB - flatten extracted properties as top-level columns
     record = {
         'id': record_id,
         'document_name': key,
@@ -164,9 +183,17 @@ def process_document(bucket: str, key: str, upload_time: str) -> Dict[str, Any]:
         'processing_time': datetime.utcnow().isoformat(),
         'file_hash': file_hash,
         'file_size': document_size,
-        'content_type': content_type,
-        'extracted_properties': extracted_properties
+        'content_type': content_type
     }
+    
+    # Add page count if available (PDF documents only)
+    if page_count is not None:
+        record['page_count'] = page_count
+    
+    # Add each extracted property as a top-level column
+    # This allows querying individual properties directly
+    for prop_name, prop_value in extracted_properties.items():
+        record[prop_name] = prop_value
     
     # Store in DynamoDB
     try:

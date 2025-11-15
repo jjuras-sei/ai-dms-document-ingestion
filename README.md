@@ -246,12 +246,15 @@ Each processed document creates a record with the following structure:
   "file_hash": "sha256-hash",
   "file_size": 12345,
   "content_type": "application/pdf",
-  "extracted_properties": {
-    "property1": "value1",
-    "property2": "value2"
-  }
+  "page_count": 42,
+  "property1": "value1",
+  "property2": "value2"
 }
 ```
+
+**Note**: All properties defined in `schema.json` are stored as top-level columns in DynamoDB, making them easily queryable. For example, if your schema defines properties like `invoice_number`, `vendor_name`, and `total_amount`, they will appear as direct columns in the DynamoDB table, not nested in a sub-object.
+
+**page_count**: Automatically extracted for PDF documents only. This field will only be present for PDF files and contains the number of pages in the document.
 
 ### Global Secondary Indexes
 
