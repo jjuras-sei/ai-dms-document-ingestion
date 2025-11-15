@@ -5,6 +5,7 @@ import uuid
 import base64
 from datetime import datetime
 from typing import Dict, Any
+from urllib.parse import unquote_plus
 import boto3
 
 # Initialize AWS clients
@@ -196,7 +197,8 @@ def lambda_handler(event, context):
             # Process each S3 record
             for s3_record in s3_event['Records']:
                 bucket = s3_record['s3']['bucket']['name']
-                key = s3_record['s3']['object']['key']
+                # URL decode the key to handle special characters
+                key = unquote_plus(s3_record['s3']['object']['key'])
                 upload_time = s3_record['eventTime']
                 
                 try:
