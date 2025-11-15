@@ -1,0 +1,13 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Document Property Extraction Schema",
+  "description": "Defines the properties to extract from documents using AWS Bedrock",
+  "type": "object",
+  "properties": {
+    "document_title": {
+      "type": "string",
+      "description": "This is the title of the document."
+    }
+  },
+  "required": ["document_title"]
+}

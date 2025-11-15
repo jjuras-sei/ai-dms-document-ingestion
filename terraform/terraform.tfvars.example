@@ -1,0 +1,30 @@
+# Example Terraform variables configuration
+# Copy this file to terraform.tfvars and customize for your deployment
+
+# Project Configuration
+project_name    = "doc-ingestion"
+aws_region      = "us-east-1"
+resource_suffix = "" # Leave empty for auto-generated suffix
+
+# Bedrock Configuration
+bedrock_model_id = "us.anthropic.claude-3-5-sonnet-20241022-v2:0"
+# Other available models:
+# - us.anthropic.claude-3-5-sonnet-20241022-v2:0 (Claude 3.5 Sonnet - default, with native PDF support)
+# - anthropic.claude-3-opus-20240229-v1:0 (Claude 3 Opus - most powerful)
+# - anthropic.claude-3-haiku-20240307-v1:0 (Claude 3 Haiku - fastest, most cost-effective)
+
+# Lambda Configuration
+lambda_timeout     = 300  # seconds
+lambda_memory_size = 512  # MB
+
+# SQS Configuration
+sqs_visibility_timeout = 360     # seconds (should be >= lambda_timeout)
+sqs_message_retention  = 1209600 # seconds (14 days)
+
+# Tagging
+common_tags = {
+  Project     = "document-ingestion"
+  Environment = "dev"
+  ManagedBy   = "terraform"
+  Owner       = "your-team-name"
+}

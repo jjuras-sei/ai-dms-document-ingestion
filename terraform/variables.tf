@@ -1,0 +1,56 @@
+variable "aws_region" {
+  description = "AWS region to deploy resources"
+  type        = string
+  default     = "us-east-1"
+}
+
+variable "project_name" {
+  description = "Project name used for resource naming"
+  type        = string
+  default     = "doc-ingestion"
+}
+
+variable "resource_suffix" {
+  description = "Optional suffix for resource names (auto-generated if not provided)"
+  type        = string
+  default     = ""
+}
+
+variable "bedrock_model_id" {
+  description = "Bedrock model ID to use for document analysis"
+  type        = string
+  default     = "us.anthropic.claude-3-5-sonnet-20241022-v2:0"
+}
+
+variable "lambda_timeout" {
+  description = "Lambda function timeout in seconds"
+  type        = number
+  default     = 300
+}
+
+variable "lambda_memory_size" {
+  description = "Lambda function memory size in MB"
+  type        = number
+  default     = 512
+}
+
+variable "sqs_visibility_timeout" {
+  description = "SQS visibility timeout in seconds (should be >= lambda timeout)"
+  type        = number
+  default     = 360
+}
+
+variable "sqs_message_retention" {
+  description = "SQS message retention period in seconds"
+  type        = number
+  default     = 1209600 # 14 days
+}
+
+variable "common_tags" {
+  description = "Common tags to apply to all resources"
+  type        = map(string)
+  default = {
+    Project     = "document-ingestion"
+    ManagedBy   = "terraform"
+  }
+}
