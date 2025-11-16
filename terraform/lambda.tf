@@ -11,8 +11,9 @@ resource "aws_lambda_function" "document_processor" {
 
   environment {
     variables = {
-      DYNAMODB_TABLE_NAME = aws_dynamodb_table.documents.name
-      BEDROCK_MODEL_ID    = var.bedrock_model_id
+      DYNAMODB_TABLE_NAME  = aws_dynamodb_table.documents.name
+      BEDROCK_MODEL_ID     = var.bedrock_model_id
+      BEDROCK_TEMPERATURE  = var.bedrock_temperature
     }
   }
 

@@ -6,7 +6,11 @@
   "properties": {
     "document_title": {
       "type": "string",
-      "description": "This is the title of the document."
+      "description": "This is the title of the document. It should be contained in the document text itself, and is NOT the filename of the document."
+    },
+    "document_summary": {
+      "type": "string",
+      "description": "This is a brief summary of the document. It should describe the meaning and purpose of the document. It should be no more than 500 characters in length."
     }
   },
   "required": ["document_title"]

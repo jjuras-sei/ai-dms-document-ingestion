@@ -18,6 +18,7 @@ dynamodb = boto3.resource('dynamodb')
 # Environment variables
 DYNAMODB_TABLE_NAME = os.environ['DYNAMODB_TABLE_NAME']
 BEDROCK_MODEL_ID = os.environ.get('BEDROCK_MODEL_ID', 'us.anthropic.claude-3-5-sonnet-20241022-v2:0')
+BEDROCK_TEMPERATURE = float(os.environ.get('BEDROCK_TEMPERATURE', '0.0'))
 
 # File paths (relative to Lambda function directory)
 SCHEMA_FILE = 'schema.json'
@@ -101,7 +102,7 @@ def invoke_bedrock_with_document(prompt_text: str, document_content: bytes, medi
                     ]
                 }
             ],
-            "temperature": 0.0
+            "temperature": BEDROCK_TEMPERATURE
         }
         
         response = bedrock_runtime.invoke_model(

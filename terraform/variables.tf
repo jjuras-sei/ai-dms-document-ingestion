@@ -22,6 +22,12 @@ variable "bedrock_model_id" {
   default     = "us.anthropic.claude-3-5-sonnet-20241022-v2:0"
 }
 
+variable "bedrock_temperature" {
+  description = "Temperature parameter for Bedrock model inference (0.0-1.0)"
+  type        = number
+  default     = 0.0
+}
+
 variable "lambda_timeout" {
   description = "Lambda function timeout in seconds"
   type        = number

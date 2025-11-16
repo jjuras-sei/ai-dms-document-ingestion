@@ -49,7 +49,7 @@ This application provides a generic, scalable infrastructure for processing docu
 - **Scalable**: Handles concurrent document uploads with SQS queuing
 - **Error Handling**: Dead letter queue for failed processing attempts
 - **Metadata Storage**: Stores extracted properties plus file hash, size, upload time, etc.
-- **Multi-Format Support**: PDF, Microsoft Word (DOCX, DOC), text, JSON, HTML, markdown, and other document formats
+- **Multi-Format Support**: PDF, text, JSON, HTML, markdown, and other document formats
 
 ## Project Structure
 
