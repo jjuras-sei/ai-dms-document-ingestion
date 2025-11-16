@@ -7,11 +7,30 @@ aws_region      = "us-east-1"
 resource_suffix = "" # Leave empty for auto-generated suffix
 
 # Bedrock Configuration
-bedrock_model_id = "us.anthropic.claude-3-5-sonnet-20241022-v2:0"
+bedrock_model_id    = "us.anthropic.claude-3-5-sonnet-20241022-v2:0"
+bedrock_temperature = 0.0 # Range: 0.0-1.0 (higher = more creative, lower = more deterministic)
 # Other available models:
 # - us.anthropic.claude-3-5-sonnet-20241022-v2:0 (Claude 3.5 Sonnet - default, with native PDF support)
 # - anthropic.claude-3-opus-20240229-v1:0 (Claude 3 Opus - most powerful)
 # - anthropic.claude-3-haiku-20240307-v1:0 (Claude 3 Haiku - fastest, most cost-effective)
+
+# DynamoDB Configuration
+# Additional Global Secondary Indices for custom schema fields
+# Uncomment and customize to add GSIs for fields defined in your schema.json
+# additional_gsi_attributes = [
+#   {
+#     name            = "DocumentTitleIndex"
+#     attribute_name  = "document_title"
+#     attribute_type  = "S"  # S=String, N=Number, B=Binary
+#     projection_type = "ALL"
+#   },
+#   {
+#     name            = "AuthorIndex"
+#     attribute_name  = "author"
+#     attribute_type  = "S"
+#     projection_type = "ALL"
+#   }
+# ]
 
 # Lambda Configuration
 lambda_timeout     = 300  # seconds

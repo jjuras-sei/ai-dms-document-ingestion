@@ -28,6 +28,17 @@ variable "bedrock_temperature" {
   default     = 0.0
 }
 
+variable "additional_gsi_attributes" {
+  description = "List of additional global secondary indices to create on the DynamoDB table"
+  type = list(object({
+    name            = string
+    attribute_name  = string
+    attribute_type  = string
+    projection_type = string
+  }))
+  default = []
+}
+
 variable "lambda_timeout" {
   description = "Lambda function timeout in seconds"
   type        = number
