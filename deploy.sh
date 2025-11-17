@@ -219,12 +219,21 @@ try:
             # Convert field name to PascalCase + Index
             index_name = ''.join(word.capitalize() for word in field_name.split('_')) + 'Index'
         
-        schema_columns.append({
+        # Check for always_include property
+        always_include = field_def.get('always_include', False)
+        
+        column_def = {
             "name": field_name,
             "type": dynamo_type,
             "description": field_def.get('description', f'Custom field: {field_name}'),
             "index": index_name
-        })
+        }
+        
+        # Add include property if always_include is true
+        if always_include:
+            column_def["include"] = True
+        
+        schema_columns.append(column_def)
     
     # Combine all columns
     output = {
