@@ -179,6 +179,7 @@ def process_document(bucket: str, key: str, upload_time: str) -> Dict[str, Any]:
     record = {
         'id': record_id,
         'document_name': key,
+        'document_url': f's3://{bucket}/{key}',
         'bucket': bucket,
         'upload_time': upload_time,
         'processing_time': datetime.utcnow().isoformat(),
