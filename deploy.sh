@@ -48,6 +48,91 @@ fi
 echo -e "${GREEN}✓ Lambda code found${NC}"
 echo ""
 
+# Generate GSI configuration from schema.json required fields
+echo -e "${YELLOW}Analyzing schema.json for required fields...${NC}"
+
+if [ ! -f "schema.json" ]; then
+    echo -e "${RED}Error: schema.json not found${NC}"
+    echo "Run build.sh first to create it from schema.json.example"
+    exit 1
+fi
+
+# Check if python3 is available
+if ! command -v python3 &> /dev/null; then
+    echo -e "${RED}Error: python3 is not installed${NC}"
+    exit 1
+fi
+
+# Parse schema.json and generate GSI configuration
+GSI_CONFIG=$(python3 << 'PYTHON_SCRIPT'
+import json
+import sys
+
+try:
+    with open('schema.json', 'r') as f:
+        schema = json.load(f)
+    
+    required_fields = schema.get('required', [])
+    
+    if not required_fields:
+        print("")
+        sys.exit(0)
+    
+    # Generate Terraform variable format
+    gsi_list = []
+    for field in required_fields:
+        # Determine type from properties if available
+        prop_type = "S"  # default to String
+        if 'properties' in schema and field in schema['properties']:
+            json_type = schema['properties'][field].get('type', 'string')
+            if json_type == 'number' or json_type == 'integer':
+                prop_type = "N"
+            elif json_type == 'boolean':
+                prop_type = "S"  # Store booleans as strings in DynamoDB
+        
+        # Create index name (PascalCase + Index)
+        index_name = ''.join(word.capitalize() for word in field.split('_')) + 'Index'
+        
+        gsi_entry = f'''  {{
+    name            = "{index_name}"
+    attribute_name  = "{field}"
+    attribute_type  = "{prop_type}"
+    projection_type = "ALL"
+  }}'''
+        gsi_list.append(gsi_entry)
+    
+    if gsi_list:
+        print("additional_gsi_attributes = [")
+        print(",\n".join(gsi_list))
+        print("]")
+    else:
+        print("")
+        
+except Exception as e:
+    print(f"Error parsing schema.json: {e}", file=sys.stderr)
+    sys.exit(1)
+PYTHON_SCRIPT
+)
+
+if [ $? -ne 0 ]; then
+    echo -e "${RED}Error: Failed to parse schema.json${NC}"
+    exit 1
+fi
+
+if [ -n "$GSI_CONFIG" ]; then
+    echo -e "${GREEN}✓ Found required fields in schema.json${NC}"
+    echo -e "${YELLOW}  Will create GSIs for required fields${NC}"
+    
+    # Write to temporary tfvars file
+    echo "$GSI_CONFIG" > terraform/auto_gsi.tfvars
+    TFVARS_FILE="-var-file=auto_gsi.tfvars"
+else
+    echo -e "${YELLOW}  No required fields found in schema.json${NC}"
+    TFVARS_FILE=""
+fi
+
+echo ""
+
 # Build Lambda deployment package
 echo -e "${YELLOW}Building Lambda deployment package...${NC}"
 ./build.sh
@@ -81,7 +166,11 @@ echo ""
 
 # Plan deployment
 echo -e "${YELLOW}Planning deployment...${NC}"
-terraform plan -out=tfplan
+if [ -n "$TFVARS_FILE" ]; then
+    terraform plan $TFVARS_FILE -out=tfplan
+else
+    terraform plan -out=tfplan
+fi
 
 echo ""
 echo -e "${YELLOW}========================================${NC}"
@@ -107,8 +196,9 @@ echo "  - Configuring IAM roles and permissions"
 echo ""
 terraform apply tfplan
 
-# Clean up plan file
+# Clean up temporary files
 rm -f tfplan
+rm -f auto_gsi.tfvars
 
 echo ""
 echo -e "${GREEN}========================================${NC}"

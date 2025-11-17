@@ -278,9 +278,15 @@ Each processed document creates a record with the following structure:
 
 ### Global Secondary Indexes
 
+The DynamoDB table includes several pre-configured global secondary indexes:
+
 - **DocumentNameIndex**: Query by document name
 - **UploadTimeIndex**: Query by upload time
 - **FileHashIndex**: Find duplicate documents
+
+**Automatic GSI Creation**: The deployment script automatically analyzes `schema.json` and creates additional global secondary indexes for all fields marked as `required`. For example, if your schema defines `document_title` as required, a `DocumentTitleIndex` will be automatically created, allowing efficient queries on that field.
+
+To manually add GSIs for non-required fields, use the `additional_gsi_attributes` variable in `terraform/terraform.tfvars` (see the `.example` file for the format).
 
 ## Cost Considerations
 

@@ -4,6 +4,7 @@
 *.tfvars
 .terraform/
 .terraform.lock.hcl
+terraform/auto_gsi.tfvars
 
 # Lambda deployment package
 lambda_deployment.zip
