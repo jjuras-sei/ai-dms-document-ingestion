@@ -13,6 +13,7 @@ build/
 # Configuration files (use .example versions instead)
 schema.json
 prompt.txt
+output-schema.json
 
 # Python
 __pycache__/

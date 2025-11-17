@@ -133,6 +133,122 @@ fi
 
 echo ""
 
+# Generate output-schema.json for downstream applications
+echo -e "${YELLOW}Generating output-schema.json...${NC}"
+
+python3 << 'PYTHON_SCRIPT'
+import json
+import sys
+import re
+
+try:
+    # Load schema.json
+    with open('schema.json', 'r') as f:
+        schema = json.load(f)
+    
+    properties = schema.get('properties', {})
+    required_fields = schema.get('required', [])
+    
+    # Parse Lambda code to extract system columns
+    with open('lambda/document_processor.py', 'r') as f:
+        lambda_code = f.read()
+    
+    # Find the record creation section
+    record_pattern = r"record = \{([^}]+)\}"
+    match = re.search(record_pattern, lambda_code, re.DOTALL)
+    
+    system_columns = []
+    if match:
+        record_section = match.group(1)
+        # Extract field assignments
+        field_pattern = r"'([^']+)':\s*([^,\n]+)"
+        fields = re.findall(field_pattern, record_section)
+        
+        # Define descriptions for known system fields
+        system_field_descriptions = {
+            'id': 'Unique identifier for the document record (UUID)',
+            'document_name': 'Name/path of the document in S3',
+            'document_url': 'Full S3 URL of the document (s3://bucket/key format)',
+            'bucket': 'S3 bucket name where the document is stored',
+            'upload_time': 'ISO 8601 timestamp when the document was uploaded to S3',
+            'processing_time': 'ISO 8601 timestamp when the document was processed',
+            'file_hash': 'SHA256 hash of the document content (for duplicate detection)',
+            'file_size': 'Size of the document in bytes',
+            'content_type': 'MIME type of the document (e.g., application/pdf)',
+            'page_count': 'Number of pages in the document (PDF only, optional)'
+        }
+        
+        # Pre-configured indexes for system fields
+        system_indexes = {
+            'id': 'Primary Key',
+            'document_name': 'DocumentNameIndex',
+            'upload_time': 'UploadTimeIndex',
+            'file_hash': 'FileHashIndex'
+        }
+        
+        for field_name, _ in fields:
+            if field_name in system_field_descriptions:
+                # Determine type based on field
+                if field_name in ['file_size', 'page_count']:
+                    field_type = 'N'
+                else:
+                    field_type = 'S'
+                
+                system_columns.append({
+                    "name": field_name,
+                    "type": field_type,
+                    "description": system_field_descriptions[field_name],
+                    "index": system_indexes.get(field_name, None)
+                })
+    
+    # Add columns from schema.json
+    schema_columns = []
+    for field_name, field_def in properties.items():
+        # Determine DynamoDB type from JSON schema type
+        json_type = field_def.get('type', 'string')
+        if json_type in ['number', 'integer']:
+            dynamo_type = "N"
+        elif json_type == 'boolean':
+            dynamo_type = "S"  # Stored as string
+        else:
+            dynamo_type = "S"
+        
+        # Determine index name if this is a required field
+        index_name = None
+        if field_name in required_fields:
+            # Convert field name to PascalCase + Index
+            index_name = ''.join(word.capitalize() for word in field_name.split('_')) + 'Index'
+        
+        schema_columns.append({
+            "name": field_name,
+            "type": dynamo_type,
+            "description": field_def.get('description', f'Custom field: {field_name}'),
+            "index": index_name
+        })
+    
+    # Combine all columns
+    output = {
+        "columns": system_columns + schema_columns
+    }
+    
+    # Write to output-schema.json
+    with open('output-schema.json', 'w') as f:
+        json.dump(output, f, indent=2)
+    
+    print(f"✓ Generated output-schema.json with {len(output['columns'])} columns")
+    
+except Exception as e:
+    print(f"Error generating output-schema.json: {e}", file=sys.stderr)
+    sys.exit(1)
+PYTHON_SCRIPT
+
+if [ $? -ne 0 ]; then
+    echo -e "${RED}Error: Failed to generate output-schema.json${NC}"
+    exit 1
+fi
+
+echo ""
+
 # Build Lambda deployment package
 echo -e "${YELLOW}Building Lambda deployment package...${NC}"
 ./build.sh
