@@ -9,6 +9,10 @@
 lambda_deployment.zip
 build/
 
+# Configuration files (use .example versions instead)
+schema.json
+prompt.txt
+
 # Python
 __pycache__/
 *.py[cod]

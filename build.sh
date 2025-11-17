@@ -15,6 +15,27 @@ if ! command -v python3 &> /dev/null; then
     exit 1
 fi
 
+# Check for configuration files and create from examples if needed
+if [ ! -f "schema.json" ]; then
+    if [ -f "schema.json.example" ]; then
+        echo "  - schema.json not found, creating from schema.json.example..."
+        cp schema.json.example schema.json
+    else
+        echo -e "${RED}Error: schema.json.example not found${NC}"
+        exit 1
+    fi
+fi
+
+if [ ! -f "prompt.txt" ]; then
+    if [ -f "prompt.txt.example" ]; then
+        echo "  - prompt.txt not found, creating from prompt.txt.example..."
+        cp prompt.txt.example prompt.txt
+    else
+        echo -e "${RED}Error: prompt.txt.example not found${NC}"
+        exit 1
+    fi
+fi
+
 # Create build directory
 BUILD_DIR="build"
 rm -rf $BUILD_DIR

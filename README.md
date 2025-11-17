@@ -55,8 +55,10 @@ This application provides a generic, scalable infrastructure for processing docu
 
 ```
 .
-├── schema.json                 # Defines properties to extract from documents
-├── prompt.txt                  # Bedrock prompt template
+├── schema.json.example         # Example schema (copy to schema.json)
+├── prompt.txt.example          # Example prompt (copy to prompt.txt)
+├── schema.json                 # Your custom extraction schema (gitignored)
+├── prompt.txt                  # Your custom prompt template (gitignored)
 ├── build.sh                    # Build Lambda deployment package
 ├── deploy.sh                   # One-click deployment script
 ├── destroy.sh                  # One-click destruction script
@@ -66,6 +68,7 @@ This application provides a generic, scalable infrastructure for processing docu
 ├── terraform/
 │   ├── main.tf               # Main Terraform configuration
 │   ├── variables.tf          # Input variables
+│   ├── terraform.tfvars.example # Example variables (copy to terraform.tfvars)
 │   ├── outputs.tf            # Output values
 │   ├── s3.tf                 # S3 bucket configuration
 │   ├── dynamodb.tf           # DynamoDB table configuration
@@ -75,7 +78,7 @@ This application provides a generic, scalable infrastructure for processing docu
 └── README.md
 ```
 
-Note: The `build.sh` script creates a Python virtual environment, installs all dependencies from `requirements.txt`, and packages everything (Lambda code, dependencies, schema.json, and prompt.txt) into a single deployment zip file.
+**Note**: The `build.sh` script automatically creates `schema.json` and `prompt.txt` from their `.example` versions if they don't exist. It then packages everything (Lambda code, dependencies, schema.json, and prompt.txt) into a single deployment zip file.
 
 ## Prerequisites
 
@@ -84,6 +87,23 @@ Note: The `build.sh` script creates a Python virtual environment, installs all d
 - Terraform >= 1.0
 - Python 3.11
 - Access to AWS Bedrock (Claude model enabled in your region)
+
+## Configuration Files
+
+This project uses `.example` files for configuration templates. These files are tracked in git and serve as starting points for customization:
+
+- `schema.json.example` → `schema.json` (your custom extraction schema)
+- `prompt.txt.example` → `prompt.txt` (your custom prompt template)
+- `terraform/terraform.tfvars.example` → `terraform/terraform.tfvars` (your infrastructure variables)
+
+The actual configuration files (`schema.json`, `prompt.txt`, `terraform.tfvars`) are gitignored, allowing you to:
+1. Keep sensitive or deployment-specific settings private
+2. Customize for your use case without affecting the repository
+3. Easily update from upstream without merge conflicts
+
+**First-time setup**: The `build.sh` script automatically creates `schema.json` and `prompt.txt` from their example files if they don't exist. For `terraform.tfvars`, you can either:
+- Let Terraform use the defaults from `variables.tf`
+- Manually copy `terraform.tfvars.example` to `terraform.tfvars` and customize
 
 ## Customization Guide
 
