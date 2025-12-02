@@ -63,11 +63,9 @@ variable "sqs_message_retention" {
   default     = 1209600 # 14 days
 }
 
-variable "common_tags" {
-  description = "Common tags to apply to all resources"
-  type        = map(string)
-  default = {
-    Project     = "document-ingestion"
-    ManagedBy   = "terraform"
-  }
+variable "cloudwatch_log_retention_days" {
+  description = "CloudWatch log retention period in days. Set to null for indefinite retention."
+  type        = number
+  default     = 7
+  nullable    = true
 }

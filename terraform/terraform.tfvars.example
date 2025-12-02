@@ -36,14 +36,9 @@ bedrock_temperature = 0.0 # Range: 0.0-1.0 (higher = more creative, lower = more
 lambda_timeout     = 300  # seconds
 lambda_memory_size = 512  # MB
 
+# CloudWatch Configuration
+cloudwatch_log_retention_days = 7  # days (set to null for indefinite retention)
+
 # SQS Configuration
 sqs_visibility_timeout = 360     # seconds (should be >= lambda_timeout)
 sqs_message_retention  = 1209600 # seconds (14 days)
-
-# Tagging
-common_tags = {
-  Project     = "document-ingestion"
-  Environment = "dev"
-  ManagedBy   = "terraform"
-  Owner       = "your-team-name"
-}
