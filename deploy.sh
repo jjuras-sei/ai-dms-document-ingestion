@@ -1,6 +1,23 @@
 #!/bin/bash
 set -e
 
+# Parse command line arguments
+CLEAR_DATA=false
+for arg in "$@"; do
+    case $arg in
+        --clear-data)
+            CLEAR_DATA=true
+            shift
+            ;;
+        *)
+            echo -e "${RED}Unknown argument: $arg${NC}"
+            echo "Usage: $0 [--clear-data]"
+            echo "  --clear-data: Clear all data from S3 bucket and DynamoDB table before deployment"
+            exit 1
+            ;;
+    esac
+done
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -36,6 +53,89 @@ fi
 
 echo -e "${GREEN}✓ AWS credentials configured${NC}"
 echo ""
+
+# Clear data if flag is set
+if [ "$CLEAR_DATA" = true ]; then
+    echo -e "${YELLOW}========================================${NC}"
+    echo -e "${YELLOW}Data Clearing Requested${NC}"
+    echo -e "${YELLOW}========================================${NC}"
+    echo ""
+    
+    # Check if terraform state exists
+    if [ -f "terraform/terraform.tfstate" ] && [ -s "terraform/terraform.tfstate" ]; then
+        echo -e "${YELLOW}Checking existing resources...${NC}"
+        
+        cd terraform
+        
+        # Get bucket name from terraform output
+        BUCKET_NAME=$(terraform output -raw documents_bucket_name 2>/dev/null || echo "")
+        TABLE_NAME=$(terraform output -raw dynamodb_table_name 2>/dev/null || echo "")
+        
+        cd ..
+        
+        if [ -n "$BUCKET_NAME" ]; then
+            echo -e "${YELLOW}Found S3 bucket: $BUCKET_NAME${NC}"
+            
+            # Check if bucket exists
+            if aws s3 ls "s3://$BUCKET_NAME" 2>/dev/null; then
+                echo -e "${YELLOW}Clearing S3 bucket contents...${NC}"
+                
+                # Delete all objects and versions
+                aws s3 rm "s3://$BUCKET_NAME" --recursive 2>/dev/null || true
+                
+                # Delete all object versions if versioning is enabled
+                aws s3api delete-objects --bucket "$BUCKET_NAME" \
+                    --delete "$(aws s3api list-object-versions --bucket "$BUCKET_NAME" \
+                    --query '{Objects: Versions[].{Key:Key,VersionId:VersionId}}' \
+                    --max-items 1000)" 2>/dev/null || true
+                
+                # Delete all delete markers if versioning is enabled
+                aws s3api delete-objects --bucket "$BUCKET_NAME" \
+                    --delete "$(aws s3api list-object-versions --bucket "$BUCKET_NAME" \
+                    --query '{Objects: DeleteMarkers[].{Key:Key,VersionId:VersionId}}' \
+                    --max-items 1000)" 2>/dev/null || true
+                
+                echo -e "${GREEN}✓ S3 bucket cleared${NC}"
+            else
+                echo -e "${YELLOW}  S3 bucket does not exist yet (skipping)${NC}"
+            fi
+        else
+            echo -e "${YELLOW}  S3 bucket not found in terraform state (skipping)${NC}"
+        fi
+        
+        if [ -n "$TABLE_NAME" ]; then
+            echo -e "${YELLOW}Found DynamoDB table: $TABLE_NAME${NC}"
+            
+            # Check if table exists
+            if aws dynamodb describe-table --table-name "$TABLE_NAME" 2>/dev/null; then
+                echo -e "${YELLOW}Clearing DynamoDB table contents...${NC}"
+                
+                # Scan and delete all items (this is safe for small to medium tables)
+                # For very large tables, consider using a different approach
+                aws dynamodb scan --table-name "$TABLE_NAME" --attributes-to-get "id" --output json | \
+                    jq -r '.Items[] | @json' | \
+                    while IFS= read -r item; do
+                        KEY=$(echo "$item" | jq -r '{id: .id}')
+                        aws dynamodb delete-item --table-name "$TABLE_NAME" --key "$KEY" 2>/dev/null || true
+                    done
+                
+                echo -e "${GREEN}✓ DynamoDB table cleared${NC}"
+            else
+                echo -e "${YELLOW}  DynamoDB table does not exist yet (skipping)${NC}"
+            fi
+        else
+            echo -e "${YELLOW}  DynamoDB table not found in terraform state (skipping)${NC}"
+        fi
+        
+        echo ""
+        echo -e "${GREEN}✓ Data clearing complete${NC}"
+        echo ""
+    else
+        echo -e "${YELLOW}No existing terraform state found${NC}"
+        echo -e "${YELLOW}This appears to be a fresh deployment (skipping data clearing)${NC}"
+        echo ""
+    fi
+fi
 
 # Check Lambda code exists
 echo -e "${YELLOW}Checking Lambda code...${NC}"

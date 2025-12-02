@@ -173,6 +173,23 @@ This script will:
 4. Deploy infrastructure after confirmation
 5. Display all output values and next steps
 
+#### Clearing Data on Deployment
+
+If you need to clear all existing data (documents in S3 and records in DynamoDB) before deploying, use the `--clear-data` flag:
+
+```bash
+./deploy.sh --clear-data
+```
+
+This will:
+- Remove all objects from the S3 bucket
+- Delete all records from the DynamoDB table
+- Then proceed with normal deployment
+
+**⚠️ WARNING**: The `--clear-data` flag permanently deletes all data. This operation cannot be undone. Use with caution and ensure you have backups of any important data.
+
+**Note**: If this is a fresh deployment (no existing terraform state), the flag will be safely ignored as there is no data to clear.
+
 ### Manual Deployment
 
 If you prefer manual deployment:
