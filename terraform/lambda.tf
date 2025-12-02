@@ -21,10 +21,6 @@ resource "aws_lambda_function" "document_processor" {
     aws_iam_role_policy_attachment.lambda_basic_execution,
     aws_iam_role_policy.lambda_custom
   ]
-
-  tags = {
-    Name = local.function_name
-  }
 }
 
 # Lambda event source mapping from SQS
@@ -44,8 +40,4 @@ resource "aws_lambda_event_source_mapping" "document_processing" {
 resource "aws_cloudwatch_log_group" "lambda" {
   name              = "/aws/lambda/${local.function_name}"
   retention_in_days = 14
-
-  tags = {
-    Name = "${local.function_name}-logs"
-  }
 }

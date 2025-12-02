@@ -1,10 +1,6 @@
 # SNS topic for S3 events
 resource "aws_sns_topic" "document_uploads" {
   name = "${var.project_name}-document-uploads-${local.resource_suffix}"
-
-  tags = {
-    Name = "${var.project_name}-document-uploads-${local.resource_suffix}"
-  }
 }
 
 # SNS topic policy to allow S3 to publish
@@ -37,20 +33,12 @@ resource "aws_sqs_queue" "document_processing" {
   visibility_timeout_seconds = var.sqs_visibility_timeout
   message_retention_seconds  = var.sqs_message_retention
   receive_wait_time_seconds  = 20 # Enable long polling
-
-  tags = {
-    Name = "${var.project_name}-document-processing-${local.resource_suffix}"
-  }
 }
 
 # SQS dead letter queue
 resource "aws_sqs_queue" "document_processing_dlq" {
   name                       = "${var.project_name}-document-processing-dlq-${local.resource_suffix}"
   message_retention_seconds  = var.sqs_message_retention
-
-  tags = {
-    Name = "${var.project_name}-document-processing-dlq-${local.resource_suffix}"
-  }
 }
 
 # Redrive policy for main queue to DLQ

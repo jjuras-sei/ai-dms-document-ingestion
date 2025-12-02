@@ -71,8 +71,4 @@ resource "aws_dynamodb_table" "documents" {
   server_side_encryption {
     enabled = true
   }
-
-  tags = {
-    Name = "${var.project_name}-documents-${local.resource_suffix}"
-  }
 }

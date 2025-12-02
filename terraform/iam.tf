@@ -14,10 +14,6 @@ resource "aws_iam_role" "lambda_execution" {
       }
     ]
   })
-
-  tags = {
-    Name = "${var.project_name}-lambda-execution-${local.resource_suffix}"
-  }
 }
 
 # Attach AWS managed policy for Lambda basic execution
