@@ -84,13 +84,13 @@ if [ "$CLEAR_DATA" = true ]; then
                 aws s3 rm "s3://$BUCKET_NAME" --recursive 2>/dev/null || true
                 
                 # Delete all object versions if versioning is enabled
-                aws s3api delete-objects --bucket "$BUCKET_NAME" \
+                aws s3api delete-objects --no-cli-pager --bucket "$BUCKET_NAME" \
                     --delete "$(aws s3api list-object-versions --bucket "$BUCKET_NAME" \
                     --query '{Objects: Versions[].{Key:Key,VersionId:VersionId}}' \
                     --max-items 1000)" 2>/dev/null || true
                 
                 # Delete all delete markers if versioning is enabled
-                aws s3api delete-objects --bucket "$BUCKET_NAME" \
+                aws s3api delete-objects --no-cli-pager --bucket "$BUCKET_NAME" \
                     --delete "$(aws s3api list-object-versions --bucket "$BUCKET_NAME" \
                     --query '{Objects: DeleteMarkers[].{Key:Key,VersionId:VersionId}}' \
                     --max-items 1000)" 2>/dev/null || true
@@ -107,16 +107,16 @@ if [ "$CLEAR_DATA" = true ]; then
             echo -e "${YELLOW}Found DynamoDB table: $TABLE_NAME${NC}"
             
             # Check if table exists
-            if aws dynamodb describe-table --table-name "$TABLE_NAME" 2>/dev/null; then
+            if aws dynamodb describe-table --no-cli-pager --table-name "$TABLE_NAME" 2>/dev/null; then
                 echo -e "${YELLOW}Clearing DynamoDB table contents...${NC}"
                 
                 # Scan and delete all items (this is safe for small to medium tables)
                 # For very large tables, consider using a different approach
-                aws dynamodb scan --table-name "$TABLE_NAME" --attributes-to-get "id" --output json | \
+                aws dynamodb scan --no-cli-pager --table-name "$TABLE_NAME" --attributes-to-get "id" --output json | \
                     jq -r '.Items[] | @json' | \
                     while IFS= read -r item; do
                         KEY=$(echo "$item" | jq -r '{id: .id}')
-                        aws dynamodb delete-item --table-name "$TABLE_NAME" --key "$KEY" 2>/dev/null || true
+                        aws dynamodb delete-item --no-cli-pager --table-name "$TABLE_NAME" --key "$KEY" 2>/dev/null || true
                     done
                 
                 echo -e "${GREEN}✓ DynamoDB table cleared${NC}"
